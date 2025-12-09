@@ -1,5 +1,8 @@
 # --- Local DB (Docker Compose) ---
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
   datasource:
     # 환경 변수(SPRING_DATASOURCE_URL)가 없으면 우측의 기본값 사용
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/imagepost_db}
