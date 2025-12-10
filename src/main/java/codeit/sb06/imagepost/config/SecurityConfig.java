@@ -11,9 +11,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableWebSecurity
@@ -28,17 +31,34 @@ public class SecurityConfig {
                 )
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form
-                        .loginProcessingUrl("/api/login") // POST /api/login 요청을 필터가 가로챔
-                        .successHandler(new RestAuthenticationSuccessHandler()) // 인증 성공 시 JSON 반환
-                        .failureHandler(new RestAuthenticationFailureHandler()) // 인증 실패 시 JSON 반환
+                        .loginProcessingUrl("/api/login")
+                        .successHandler(new RestAuthenticationSuccessHandler())
+                        .failureHandler(new RestAuthenticationFailureHandler())
                         .permitAll()
                 )
+                // [추가] 세션 관리 정책 설정
+                .sessionManagement(session -> session
+                        .maximumSessions(1)                 // 최대 허용 세션 1개
+                        .maxSessionsPreventsLogin(false)    // false: 기존 세션 만료 (밀어내기), true: 신규 로그인 차단
+                        .expiredUrl("/app/login?expired")   // 세션 만료 시 이동할 URL (API 환경에서는 핸들러 처리가 더 적합할 수 있음)
+                        .sessionRegistry(sessionRegistry())
+                )
                 .logout(logout -> logout
-                        .logoutUrl("/api/logout") // POST /api/logout 요청 시 로그아웃 처리
+                        .logoutUrl("/api/logout")
                         .logoutSuccessHandler((req, res, auth) -> res.setStatus(200))
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
     @Bean
