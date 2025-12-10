@@ -75,10 +75,7 @@ export const updatePost = (id, postData) => {
 
 // 게시글 삭제 (PostDeleteRequest DTO 전송)
 export const deletePost = (id, password) => {
-    return apiClient.delete(`/${id}`, {
-        // Spring의 @RequestBody로 받기 위해 'data' 필드에 DTO를 넣어 전송
-        data: { password: password }
-    });
+    return apiClient.delete(`/${id}`);
 };
 
 apiClient.interceptors.response.use(
@@ -96,11 +93,14 @@ apiClient.interceptors.response.use(
     }
 );
 
-export const loginUser = (username, password) => {
-    // Spring Security의 기본 formLogin은 'application/x-www-form-urlencoded'를 기대함
+export const loginUser = (username, password, rememberMe = false) => {
     const params = new URLSearchParams();
     params.append('username', username);
     params.append('password', password);
+
+    if (rememberMe) {
+        params.append('remember-me', 'true');
+    }
 
     return apiClient.post('/login', params, {
         baseURL: '/api',

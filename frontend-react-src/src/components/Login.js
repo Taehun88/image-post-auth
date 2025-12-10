@@ -4,6 +4,7 @@ import { loginUser } from '../apiService';
 
 function Login({ setIsLoggedIn }) { // Props로 상태 변경 함수 수신
     const [credentials, setCredentials] = useState({ username: '', password: '' });
+    const [rememberMe, setRememberMe] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
@@ -12,15 +13,22 @@ function Login({ setIsLoggedIn }) { // Props로 상태 변경 함수 수신
         setCredentials(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleCheckboxChange = (e) => {
+        setRememberMe(e.target.checked);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await loginUser(credentials.username, credentials.password);
+            const response = await loginUser(
+                credentials.username,
+                credentials.password,
+                rememberMe
+            );
+
             if (response.status === 200) {
                 alert('로그인 성공!');
-
                 localStorage.setItem('isLoggedIn', 'true');
-
                 setIsLoggedIn(true);
                 navigate('/');
             }
@@ -50,6 +58,18 @@ function Login({ setIsLoggedIn }) { // Props로 상태 변경 함수 수신
                     onChange={handleChange}
                     required
                 />
+                <div style={{ margin: '10px 0', textAlign: 'left' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={handleCheckboxChange}
+                            style={{ width: 'auto', marginRight: '8px' }}
+                        />
+                        로그인 상태 유지
+                    </label>
+                </div>
+
                 {error && <div className="error-msg">{error}</div>}
                 <button type="submit">로그인</button>
             </form>

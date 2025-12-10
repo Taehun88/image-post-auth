@@ -16,15 +16,23 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+
+import javax.sql.DataSource;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final DataSource dataSource;
+    private final UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -38,6 +46,16 @@ public class SecurityConfig {
                         .successHandler(new RestAuthenticationSuccessHandler())
                         .failureHandler(new RestAuthenticationFailureHandler())
                         .permitAll()
+                )
+                .rememberMe(remember -> remember
+                        // 1. 핵심 설정
+                        .key("my-secure-key-1234")           // 쿠키 암호화 키 (실무에선 환경변수 사용 권장)
+                        .tokenValiditySeconds(60 * 60 * 24 * 30) // 30일간 유지 (기본 2주)
+                        .rememberMeParameter("remember-me")  // 프론트엔드에서 보낼 파라미터명
+
+                        // 2. 영구 토큰 방식 설정 (DB 연동)
+                        .userDetailsService(userDetailsService) // 필수: 재인증 시 유저 정보 로드
+                        .tokenRepository(tokenRepository())     // 필수: DB 레포지토리 연결
                 )
                 // 세션 관리 정책 고도화
                 .sessionManagement(session -> session
@@ -74,6 +92,13 @@ public class SecurityConfig {
     @Bean
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
+    }
+
+    @Bean
+    public PersistentTokenRepository tokenRepository() {
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
     }
 
     @Bean
