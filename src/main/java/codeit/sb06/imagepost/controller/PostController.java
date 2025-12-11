@@ -1,7 +1,6 @@
 package codeit.sb06.imagepost.controller;
 
 import codeit.sb06.imagepost.dto.request.PostCreateRequest;
-import codeit.sb06.imagepost.dto.request.PostDeleteRequest;
 import codeit.sb06.imagepost.dto.request.PostUpdateRequest;
 import codeit.sb06.imagepost.dto.response.PostResponse;
 import codeit.sb06.imagepost.service.PostService;
@@ -43,12 +42,9 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(
-            @PathVariable Long id,
-            @Valid @RequestBody PostDeleteRequest request
-    ) {
-        postService.deletePost(id, request.password());
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        postService.deletePost(id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}")

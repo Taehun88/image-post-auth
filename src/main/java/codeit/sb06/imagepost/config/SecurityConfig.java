@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -38,6 +39,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // 조회(GET)는 누구나 가능
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        // 작성/수정/삭제는 인증된 사용자(MEMBER, ADMIN)만 가능
+                        .requestMatchers("/api/posts/**").authenticated()
+                        // 나머지 요청 허용
                         .anyRequest().permitAll()
                 )
                 .csrf(csrf -> csrf.disable())
@@ -127,6 +133,15 @@ public class SecurityConfig {
                         .role(Role.USER)
                         .build();
                 memberRepository.save(user);
+            }
+
+            if (memberRepository.findByUsername("user2").isEmpty()) {
+                Member user2 = Member.builder()
+                        .username("user2")
+                        .password(passwordEncoder.encode("1234"))
+                        .role(Role.USER)
+                        .build();
+                memberRepository.save(user2);
             }
         };
     }

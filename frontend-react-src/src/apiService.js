@@ -20,8 +20,6 @@ export const createPost = (postData) => {
 
     // 1. JSON DTO를 'request' 파트로 추가 (Blob 사용)
     const postRequestDto = {
-        author: postData.author,
-        password: postData.password,
         title: postData.title,
         content: postData.content,
         tags: postData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -50,7 +48,6 @@ export const updatePost = (id, postData) => {
 
     // 1. JSON DTO ('request' 파트)
     const postUpdateDto = {
-        password: postData.password, // 수정 시 비밀번호는 필수
         title: postData.title,
         content: postData.content,
         tags: postData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -74,7 +71,7 @@ export const updatePost = (id, postData) => {
 };
 
 // 게시글 삭제 (PostDeleteRequest DTO 전송)
-export const deletePost = (id, password) => {
+export const deletePost = (id) => {
     return apiClient.delete(`/${id}`);
 };
 
