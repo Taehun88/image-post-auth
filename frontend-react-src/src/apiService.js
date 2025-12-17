@@ -20,8 +20,6 @@ export const createPost = (postData) => {
 
     // 1. JSON DTO를 'request' 파트로 추가 (Blob 사용)
     const postRequestDto = {
-        author: postData.author,
-        password: postData.password,
         title: postData.title,
         content: postData.content,
         tags: postData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -50,7 +48,6 @@ export const updatePost = (id, postData) => {
 
     // 1. JSON DTO ('request' 파트)
     const postUpdateDto = {
-        password: postData.password, // 수정 시 비밀번호는 필수
         title: postData.title,
         content: postData.content,
         tags: postData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
@@ -74,9 +71,44 @@ export const updatePost = (id, postData) => {
 };
 
 // 게시글 삭제 (PostDeleteRequest DTO 전송)
-export const deletePost = (id, password) => {
-    return apiClient.delete(`/${id}`, {
-        // Spring의 @RequestBody로 받기 위해 'data' 필드에 DTO를 넣어 전송
-        data: { password: password }
+export const deletePost = (id) => {
+    return apiClient.delete(`/${id}`);
+};
+
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // 401 에러 발생 시 localStorage 비우고 페이지 리로드(또는 홈 이동)
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = '/login'; // 강제 이동
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
+export const loginUser = (username, password, rememberMe = false) => {
+    const params = new URLSearchParams();
+    params.append('username', username);
+    params.append('password', password);
+
+    if (rememberMe) {
+        params.append('remember-me', 'true');
+    }
+
+    return apiClient.post('/login', params, {
+        baseURL: '/api',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    });
+};
+
+export const logoutUser = () => {
+    return apiClient.post('/logout', {}, {
+        baseURL: '/api'
     });
 };
